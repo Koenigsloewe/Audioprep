@@ -13,3 +13,6 @@ class Conversion:
 
     def get_output_file_path(self, output_path, file_name, audio_format='wav'):
         return os.path.join(output_path, f"{file_name}.{audio_format}")
+
+    def delete_processing_audio_file(self, output_file_path):
+        os.remove(output_file_path)

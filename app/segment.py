@@ -23,4 +23,4 @@ class Segment:
             segments.append(segment)
 
         for i, segment in enumerate(segments):
-            segment.export(os.path.join(output_path, f"{os.path.basename(output_file_path)}_{i + 1}"), format="wav")
+            segment.export(os.path.join(output_path, f"{os.path.basename(output_file_path)}_{i + 1}.wav"), format="wav")

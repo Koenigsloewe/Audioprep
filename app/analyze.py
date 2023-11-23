@@ -10,7 +10,8 @@ class Analysis:
     def analyse_audio(self, output_file_path):
         audio = AudioSegment.from_file(output_file_path)
 
-        chunks = split_on_silence(audio, min_silence_len=self.min_silence_len, silence_thresh=self.silence_thresh)
+        chunks = split_on_silence(audio, min_silence_len=self.min_silence_len, silence_thresh=self.silence_thresh,
+                                  keep_silence=False, seek_step=1)
 
         output = sum(chunks)
         output.export(output_file_path, format="wav")

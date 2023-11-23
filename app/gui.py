@@ -1,11 +1,53 @@
 import os
+import time
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QLabel, QVBoxLayout, QGridLayout, \
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QUrl
+from PyQt5.QtGui import QIcon, QPixmap, QDesktopServices
+from PyQt5.QtWidgets import QMainWindow, QWidget, QLabel, QGridLayout, \
     QLineEdit, QPushButton, QProgressBar, QSpacerItem, QFileDialog, QMessageBox
 
-from convert import Conversion
+from .convert import Conversion
+from .analyze import Analysis
+from .segment import Segment
+
+
+class AudioProcessingThread(QThread):
+    finished = pyqtSignal()
+    error_occurred = pyqtSignal(str)
+    progress_updated = pyqtSignal(int)
+
+    def __init__(self, input_path, output_path, file_name):
+        super().__init__()
+        self.input_path = input_path
+        self.output_path = output_path
+        self.file_name = file_name
+
+    def run(self):
+        try:
+
+            convert = Conversion()
+            convert.convert_to_audio(self.input_path, self.output_path, self.file_name, "wav")
+            output_file_path = convert.get_output_file_path(self.output_path, self.file_name)
+
+            self.progress_updated.emit(33)
+
+            analyse = Analysis(1, -50)
+            analyse.analyse_audio(output_file_path)
+
+            self.progress_updated.emit(66)
+
+            segment = Segment()
+            segment.segment(output_file_path, self.output_path)
+            convert.delete_processing_audio_file(output_file_path)
+
+            self.progress_updated.emit(100)
+
+            self.finished.emit()
+
+        except Exception as e:
+            error_message = f"Error occurred: {str(e)}"
+            self.error_occurred.emit(error_message)
+
 
 class AudioprepGUI(QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -64,7 +106,7 @@ class AudioprepGUI(QMainWindow):
         self.progressbar.setTextVisible(False)
         centralwidget_layout.addWidget(self.progressbar, 6, 0, 1, 3)
 
-        self.progression_label = QLabel("bla bla")
+        self.progression_label = QLabel("Waiting...")
         centralwidget_layout.addWidget(self.progression_label, 7, 1, 1, 1, alignment=Qt.AlignCenter)
 
         centralwidget_layout.addItem(QSpacerItem(60, 60), 8, 1)
@@ -85,6 +127,7 @@ class AudioprepGUI(QMainWindow):
         self.input_open_dir_btn.clicked.connect(lambda: self.open_path("mp3", self.input_line_edit))
         self.output_open_dir_btn.clicked.connect(lambda: self.open_path("dir", self.output_line_edit))
         self.start_btn.clicked.connect(lambda: self.start_progress())
+        self.open_folder_btn.clicked.connect(lambda: self.open_dir(self.output_line_edit.text().strip()))
 
     def check_filled(self):
         input_path = self.input_line_edit.text().strip()
@@ -96,8 +139,11 @@ class AudioprepGUI(QMainWindow):
             self.start_btn.setEnabled(False)
 
     def open_path(self, file_type, line_edit):
+        root_directory = os.path.abspath(os.sep)
+
         if file_type == "mp3":
             file_dialog = QFileDialog()
+            file_dialog.setDirectory(root_directory)
             file_dialog.setNameFilter("MP3 files (*.mp3)")
             file_dialog.selectNameFilter("MP3 files (*.mp3)")
 
@@ -115,18 +161,39 @@ class AudioprepGUI(QMainWindow):
     def start_progress(self):
         input_path = self.input_line_edit.text().strip()
         output_path = self.output_line_edit.text().strip()
+        filename = os.path.basename(input_path)
+        filename = os.path.splitext(filename)[0]
 
         if os.path.isfile(input_path) and os.path.isdir(output_path):
-            print("")
+            self.processing_thread = AudioProcessingThread(input_path, output_path, filename)
+            self.processing_thread.finished.connect(self.on_processing_finished)
+            self.processing_thread.error_occurred.connect(self.raise_error)
+            self.processing_thread.progress_updated.connect(self.update_progress)
+            self.processing_thread.start()
+
         elif not os.path.isfile(input_path):
             self.raise_error("Your MP3 file does not exist!")
         elif not os.path.isdir(output_path):
             self.raise_error("Your directory does not exist!")
 
     def raise_error(self, text):
+        self.progressbar.setValue(0)
+        self.progression_label.setText("Waiting...")
+
         error_dialog = QMessageBox()
         error_dialog.setIcon(QMessageBox.Critical)
         error_dialog.setWindowTitle("Error")
         error_dialog.setText(text)
         error_dialog.setStandardButtons(QMessageBox.Ok)
         error_dialog.exec_()
+
+    def update_progress(self, value):
+        self.progressbar.setValue(value)
+        self.progression_label.setText(f"Progress: {value}%")
+
+    def on_processing_finished(self):
+        self.open_folder_btn.setEnabled(True)
+        self.progression_label.setText("Process finished!")
+
+    def open_dir(self, output_path):
+        QDesktopServices.openUrl(QUrl.fromLocalFile(output_path))

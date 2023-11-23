@@ -7,7 +7,6 @@ class Conversion:
         pass
 
     def convert_to_audio(self, input_path, output_path, file_name, audio_format='wav'):
-        print(fr"{output_path}.{audio_format}")
         audio_clip = AudioFileClip(input_path)
         audio_clip.write_audiofile(fr"{output_path}\{file_name}.{audio_format}")
 

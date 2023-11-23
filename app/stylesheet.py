@@ -1,0 +1,53 @@
+
+def load_stylesheet():
+    stylesheet = """
+    *{
+    background-color: #032433;
+    color: white;
+}
+
+QPushButton{
+    background-color: white;
+    color:  #032433;
+    border: none;
+}
+
+QPushButton:hover{
+    background-color: #CDD3D6;
+    color:  #032433;
+    border: none;
+}
+QPushButton:disabled{
+    background-color: #808080;
+}
+
+#open_folder_btn{
+    background-color: #032433;
+    color: white;
+    border: 2px solid white;
+}
+
+#open_folder_btn:hover{
+    background-color: #CDD3D6;
+    color: white;
+    border: 2px solid white;
+}
+
+QLineEdit{
+    padding-left: 5px;
+    padding-right: 5px;
+    border: 2px solid white;
+
+}
+
+QProgressBar {
+     border: 0px solid grey;
+     background-color: #808080;
+ }
+
+ QProgressBar::chunk {
+     background-color: white;
+     width: 20px;
+ } 
+    """
+    return stylesheet

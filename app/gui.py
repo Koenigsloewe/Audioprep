@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QLabel, QGridLayout, \
 from .convert import Conversion
 from .analyze import Analysis
 from .segment import Segment
+from .stylesheet import load_stylesheet
 
 
 class AudioProcessingThread(QThread):
@@ -115,9 +116,7 @@ class AudioprepGUI(QMainWindow):
         self.open_folder_btn.setFixedHeight(35)
         centralwidget_layout.addWidget(self.open_folder_btn, 9, 0, 1, 3)
 
-        with open("resources/styles.qss", "r") as qss_file:
-            style_sheet = qss_file.read()
-            self.setStyleSheet(style_sheet)
+        self.setStyleSheet(load_stylesheet())
 
         self.start_btn.setEnabled(False)
         self.open_folder_btn.setEnabled(False)

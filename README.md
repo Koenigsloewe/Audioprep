@@ -1,6 +1,6 @@
 # Audioprep
 
-Audioprep is a Python tool designed to automate the preparation of training material for voice models. It simplifies the process of cleaning, analyzing, and segmenting audio files for efficient use in training.
+Audioprep is a Python tool designed to automate the preparation of training material for RVC. It simplifies the process of cleaning, analyzing, and segmenting audio files for efficient use in training.
 
 ## Features
 
